@@ -69,20 +69,97 @@ class Todo {
 
   deleteItem(target) {
     this.todoData.forEach(item => {
-      if (target.closest('.todo-item').key === item.key) {
-        this.todoData.delete(item.key);
+      if (target.closest(".todo-item").key === item.key) {
+        let animateId;
+        let count = 0;
+        target.closest(".todo-item").style.position = "relative";
+        const animate = () => {
+          animateId = requestAnimationFrame(animate);
+          count++;
+          if (count <= 30) {
+            target.closest(".todo-item").style.left = count * 20 + "px";
+          } else {
+            cancelAnimationFrame(animateId);
+            this.todoData.delete(item.key);
+            this.render();
+          }
+        };
+        animateId = requestAnimationFrame(animate);
       }
     });
-    this.render();
   }
 
   completedItem(target) {
     this.todoData.forEach(item => {
-      if (target.closest('.todo-item').key === item.key) {
-        item.completed = !item.completed;
+      if (target.closest(".todo-item").key === item.key) {
+        let animateId;
+        let count = 0;
+        target.closest(".todo-item").style.position = "relative";
+        const animate = () => {
+          animateId = requestAnimationFrame(animate);
+          count++;
+          if (count <= target.closest(".todo-item").offsetTop && item.completed) {
+            target.closest(".todo-item").style.bottom = count * 12 + "px";
+          } else if (count <= 12 && !item.completed) {
+            target.closest(".todo-item").style.top = count * 12 + "px";
+          } else {
+            cancelAnimationFrame(animateId);
+            item.completed = !item.completed;
+            this.render();
+          }
+        };
+        animateId = requestAnimationFrame(animate);
       }
     });
-    this.render();
+  }
+
+  editItem(target) {
+    this.todoData.forEach(item => {
+      if (target.closest(".todo-item").key === item.key) {
+        target.closest(".todo-item").querySelector("span").setAttribute("contenteditable", true);
+        const menu = document.createElement("button");
+        menu.style.cssText = `background-color: black;
+                opacity: 0;
+                position: relative;
+                color: #fff;
+                border:none;
+                cursor:pointer;
+                height:40px;
+                border-radius: 5px;`;
+        menu.textContent = "Применить";
+        target.closest(".todo-item").before(menu);
+        target.style.pointerEvents = "none";
+        target.closest(".todo-item").style.cssText = `position: relative;`;
+        let count = 0;
+        let animateEditId;
+
+        const animateEdit = () => {
+          animateEditId = requestAnimationFrame(animateEdit);
+          count += 0.05;
+          console.log();
+          if (count <= 1) {
+            menu.style.opacity = count;
+            target.closest(".todo-item").style.opacity = count * 20 + "px";
+          } else {
+            cancelAnimationFrame(animateEditId);
+          }
+        };
+        animateEditId = requestAnimationFrame(animateEdit);
+
+        menu.addEventListener("click", () => {
+          item.value = target.closest(".todo-item").querySelector("span").textContent.trim();
+          if (item.value === "") {
+            alert("Введите что-нибудь!");
+            target.closest(".todo-item").querySelector("span").setAttribute("contenteditable", true);
+            return;
+          }
+          target.closest(".todo-item").setAttribute("contenteditable", false);
+          menu.parentNode.removeChild(menu);
+          target.style.pointerEvents = !"none";
+          this.render();
+        });
+      }
+    });
   }
 
   handler() {
@@ -91,6 +168,8 @@ class Todo {
         this.deleteItem(event.target);
       } else if (event.target.matches('.todo-complete')) {
         this.completedItem(event.target);
+      } else if (event.target.matches(".todo-edit")) {
+        this.editItem(event.target);
       }
     });
   }
